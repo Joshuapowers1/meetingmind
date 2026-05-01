@@ -1,115 +1,194 @@
-# Recall.ai Real-time Events Starter Kit
+# Do This For Me
 
-This sample application demonstrates how to interact with the Recall.ai API to send a bot to a meeting and subscribe to various real-time events via WebSockets. It provides a simple web interface to configure and dispatch the bot, and logs received real-time events to the browser.
-
-This starter kit is designed to help developers quickly understand and implement real-time data streaming with Recall.ai.
+AI-powered meeting note taker inspired by **Fathom AI** and **Granola**. Features real-time transcription, intelligent keyword detection, AI summaries, and advanced features like cross-meeting search, coaching scorecards, and auto-join.
 
 ## Features
 
-- Send a Recall.ai bot to a meeting (e.g., Google Meet, Zoom).
-- Configure subscriptions for various real-time events:
-  - Mixed audio from the call (`audio_mixed_raw.data`)
-  - Full and partial transcripts (`transcript.data`, `transcript.partial_data`)
-  - Separate participant video (`video_separate_png.data`)
-  - Separate participant audio (`audio_separate_raw.data`)
-- Real-time log display in the browser showing events received from the Recall.ai bot via WebSockets.
+### Core Features
+- **Bot joins your meetings** — Works with Google Meet, Zoom, Teams
+- **Real-time transcription** — See what's being said as it happens
+- **Keyword detection** — Automatically identifies action items, decisions, deadlines, blockers
+- **AI summaries** — Generate meeting summaries with key points and action items
+- **Local storage** — All data stored locally in SQLite
+- **Search** — Find past meetings by content, keywords, or title
 
-## Prerequisites
+### Fathom-Inspired Features
+- **Meeting Highlights/Clips** — Save and share key moments from meetings
+- **Ask DTFM** — AI chat across all your meetings (like Fathom's "Ask Fathom")
+- **Coaching Scorecards** — Meeting effectiveness scores with AI feedback
+- **Calendar Auto-Join** — Automatically send bot to scheduled meetings
 
-- **Node.js** (v16 or higher recommended)
-- **npm** (comes with Node.js)
-- **Recall.ai API Key**: You'll need an API key from your [Recall.ai Dashboard](https://us-west-2.recall.ai/dashboard/developers/api-keys).
-- **Ngrok** (or a similar tunneling service): Required to expose your local WebSocket server to the internet so Recall.ai can connect to it for real-time event delivery. You can download it from [ngrok.com](https://ngrok.com/download).
+### Granola-Inspired Features
+- **Enhanced Notes** — Transform rough notes into polished documents
+- **Meeting Templates** — Pre-built structures for 1:1s, standups, sales calls
+- **Cross-meeting Intelligence** — Search and reference past meetings
 
-## Getting Started
+### Additional Features
+- **Follow-up Emails** — AI-generated follow-up emails from meetings
+- **Speaker Analytics** — Track talk time and participation
+- **CRM Integration** — Link meetings to contacts and companies
+- **Team Collaboration** — Comments, sharing, and folders
 
-### 1. Clone the Repository
+## Quick Start
 
 ```bash
-git clone https://github.com/recallai/real-time-event-starter-kit.git
-cd real-time-event-starter-kit
-```
-
-### 2. Install Dependencies
-
-Navigate to the project directory and install the necessary packages:
-
-```bash
+# 1. Install dependencies
 npm install
-```
 
-### 3. Configure Environment Variables
+# 2. Configure environment
+cp .env.example .env
+# Edit .env and add your RECALL_API_KEY (required)
+# Optionally add OPENAI_API_KEY for AI summaries
 
-This project uses a `.env` file to manage sensitive information and configuration.
+# 3. Start ngrok (in a separate terminal)
+ngrok http 3456
 
-1.  **Create a `.env` file:** In the root of the project, create a new file named `.env`.
-    You can copy the `env.example` file if one is provided in the repository:
-
-    ```bash
-    cp .env.example .env
-    ```
-
-2.  **Add Your Recall.ai API Key:** Open the `.env` file and add your Recall.ai API key:
-
-    ```env
-    RECALL_API_KEY=YOUR_RECALL_API_KEY_HERE
-    ```
-
-### 4. Set up Ngrok (for Real-time Events)
-
-To receive real-time events from the Recall.ai bot, your local server's WebSocket endpoint needs to be publicly accessible. Ngrok is a great tool for this.
-
-1.  **Start Ngrok:** Open a new terminal window and run ngrok to forward to your **WebSocket server port** (default is `3456`, or the `WEBSOCKET_PORT` you set in `.env`).
-
-    ```bash
-    ngrok http 3456
-    ```
-
-    _(If you configured a different `WEBSOCKET_PORT`, use that number instead of 3456.)_
-
-2.  **Get the Ngrok URL:** Ngrok will display a public forwarding URL in its terminal output. It will look something like `https://random-string.ngrok-free.app` (if you're on a free plan) or use your custom domain if you have one.
-    You will need the **`wss://`** (WebSocket Secure) version of this URL for the application. For example, if ngrok shows `https://abcdef12345.ngrok-free.app`, you will use `wss://abcdef12345.ngrok-free.app`.
-
-    Keep this `wss://` URL handy. You'll enter it into the web UI.
-
-### 5. Run the Application
-
-Once dependencies are installed and your `.env` file is configured, start the server:
-
-```bash
+# 4. Start the server
 npm run dev
+
+# 5. Open http://localhost:3000
 ```
 
-By default, the web UI will be accessible at `http://localhost:3000` (or your configured `PORT`).
-The server console will show messages indicating that the HTTP server and the Recall Bot WebSocket server are running.
+## Environment Variables
 
-## Using the Application
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `RECALL_API_KEY` | Yes | Get from [Recall.ai Dashboard](https://us-west-2.recall.ai/dashboard/developers/api-keys) |
+| `OPENAI_API_KEY` | No | For AI-powered features. Without this, basic functionality still works |
+| `PORT` | No | Web server port (default: 3000) |
+| `WEBSOCKET_PORT` | No | WebSocket port for Recall.ai bot (default: 3456) |
 
-1.  **Open the Web UI:** Navigate to `http://localhost:3000` (or your configured `PORT`) in your web browser.
+## How It Works
 
-2.  **Review Instructions:** The page provides brief instructions on API key setup and ngrok usage.
+1. **Click "New Meeting"** — Enter your meeting URL and ngrok WebSocket URL
+2. **Bot joins the meeting** — Recall.ai bot joins and starts transcribing
+3. **Keywords detected live** — Action items, decisions, deadlines appear as people talk
+4. **Generate summary** — Click the star button to create an AI summary after the meeting
+5. **Ask questions** — Use "Ask DTFM" to search across all your meetings
+6. **Get coaching** — View meeting scores and feedback to improve
 
-3.  **Enter Meeting Details:**
+## Tech Stack
 
-    - **Meeting URL:** Provide a valid meeting URL (e.g., from Google Meet, Zoom).
-    - **Bot Name (Optional):** You can give your bot a custom name.
+- **Backend**: Node.js, Express, TypeScript
+- **Database**: SQLite (better-sqlite3)
+- **Real-time**: WebSocket
+- **Transcription**: Recall.ai
+- **AI**: OpenAI GPT-4o (optional)
 
-4.  **Select Real-time Event Subscriptions:**
+## API Endpoints
 
-    - Check the boxes for the real-time events you want to receive (e.g., mixed audio, transcripts, separate participant video/audio).
+### Core Endpoints
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/meetings` | GET | List all meetings |
+| `/api/meetings/:id` | GET | Get meeting with transcripts, keywords, notes |
+| `/api/meetings/:id/summarize` | POST | Generate AI summary |
+| `/api/search?q=query` | GET | Search meetings |
+| `/send-bot` | POST | Send bot to a meeting |
 
-5.  **Enter Public WebSocket URL:**
+### Fathom/Granola Feature Endpoints
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/meetings/:id/highlights` | GET/POST | Meeting clips/highlights |
+| `/api/templates` | GET/POST | Meeting templates |
+| `/api/settings` | GET/PUT | User settings (auto-join, etc.) |
+| `/api/ai/conversations` | GET/POST | Ask DTFM conversations |
+| `/api/ai/conversations/:id/messages` | GET/POST | Chat messages |
+| `/api/meetings/:id/enhanced-notes` | GET/POST | Enhanced notes |
+| `/api/meetings/:id/followup-emails` | GET/POST | Follow-up emails |
+| `/api/meetings/:id/scores` | GET/POST | Coaching scorecards |
+| `/api/analytics/speakers` | GET | Speaker statistics |
+| `/api/auto-join/start` | POST | Enable auto-join |
+| `/api/auto-join/stop` | POST | Disable auto-join |
 
-    - In the "Public WebSocket URL" field, paste the **`wss://`** forwarding URL you obtained from `ngrok` in the setup steps.
-    - This field is required if you select any real-time event subscriptions.
+## Project Structure
 
-6.  **Send the Bot:** Click the "Send Bot" button.
+```
+do-this-for-me/
+├── src/
+│   ├── index.ts       # Main server with all API routes
+│   ├── database.ts    # SQLite operations (20+ tables)
+│   ├── keywords.ts    # Keyword detection
+│   ├── summarizer.ts  # AI summarization
+│   └── types.ts       # TypeScript types
+├── public/
+│   ├── index.html     # Web UI
+│   ├── style.css      # Styling
+│   └── app.js         # Frontend JS
+├── data/              # SQLite database (auto-created)
+└── dist/              # Compiled JS (auto-generated)
+```
 
-7.  **Observe Logs:**
+## Database Schema
 
-    - The "Real-time Server Log" section on the web page will display:
-      - Status messages from the server (e.g., API call attempts, WebSocket connections).
-      - The actual real-time event data received from the Recall.ai bot.
-    - The server console (where you ran `npm run dev`) will also show these logs and any errors.
+The database includes tables for:
 
-This starter kit is intended to be a foundation. Feel free to expand upon it, add more sophisticated error handling, or integrate other Recall.ai API features.
+**Core**: meetings, participants, transcripts, keywords, notes, action_items
+
+**CRM**: companies, contacts, contact_meetings, relationships
+
+**Collaboration**: teams, comments, shares, folders, tags
+
+**Fathom/Granola Features**: highlights, meeting_templates, user_settings, ai_conversations, ai_messages, enhanced_notes, followup_emails, meeting_scores
+
+**Integration**: webhooks, calendar_events, exports
+
+## Contributing
+
+We welcome contributions! Here are some areas where help is needed:
+
+### High Priority
+- [ ] Google Calendar OAuth integration for auto-join
+- [ ] Outlook/Microsoft 365 calendar integration
+- [ ] Video clip extraction from recordings
+- [ ] Team sharing and permissions
+- [ ] Mobile responsive UI
+
+### Medium Priority
+- [ ] Slack/Teams notifications
+- [ ] Chrome extension for calendar detection
+- [ ] Custom keyword categories
+- [ ] Meeting recording playback
+- [ ] Export to Notion/Confluence
+
+### Getting Started
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Read the code comments in `src/index.ts` and `src/database.ts`
+4. Make your changes
+5. Test locally with `npm run dev`
+6. Submit a pull request
+
+### Code Style
+- TypeScript with strict mode
+- Comprehensive JSDoc comments on functions
+- Feature sections clearly labeled in code
+
+## Keyword Categories
+
+The system automatically detects:
+
+| Category | Examples |
+|----------|----------|
+| Action Items | "need to", "will do", "should", "action item" |
+| Decisions | "decided", "agreed", "approved", "confirmed" |
+| Deadlines | "by Friday", "end of week", "ASAP" |
+| Follow-ups | "follow up", "circle back", "schedule a call" |
+| Blockers | "blocked", "stuck", "waiting on" |
+| Questions | Sentences with question words or "?" |
+| Numbers | "$10,000", "50%", "Q3", "2 million" |
+
+## Cost
+
+- **Recall.ai**: $0.50/hour of recorded meeting (5 free hours to start)
+- **OpenAI**: ~$0.01-0.10 per AI feature call (optional)
+
+## License
+
+MIT
+
+## Acknowledgments
+
+- Inspired by [Fathom AI](https://fathom.video) and [Granola](https://granola.so)
+- Built with [Recall.ai](https://recall.ai) for meeting bot functionality
+- Powered by [OpenAI](https://openai.com) for AI features

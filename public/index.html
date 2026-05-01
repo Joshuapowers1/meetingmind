@@ -3,351 +3,544 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Recall.ai Starter Kit</title>
+    <title>MeetingMind - AI Meeting Intelligence</title>
     <link rel="stylesheet" href="style.css" />
-    <style>
-      .event-group-label {
-        font-weight: 600;
-        margin-top: 15px;
-        margin-bottom: 5px;
-        display: block;
-        color: #333;
-        font-size: 1.1em;
-      }
-      .event-item {
-        margin-left: 20px;
-        margin-bottom: 5px;
-      }
-    </style>
   </head>
   <body>
-    <div class="container">
-      <h1>Recall.ai API Starter Kit</h1>
-
-      <div class="main-layout-columns">
-        <div class="form-column">
-          <h2>Send Bot to Meeting</h2>
-          <form id="sendBotForm">
-            <div class="form-group">
-              <label for="meetingUrl"
-                >Meeting URL (e.g., Google Meet, Zoom):</label
-              >
-              <input type="url" id="meetingUrl" name="meetingUrl" required />
-            </div>
-            <div class="form-group">
-              <label for="botName">Bot Name (Optional):</label>
-              <input
-                type="text"
-                id="botName"
-                name="botName"
-                placeholder="Meeting Notetaker"
-              />
-            </div>
-
-            <hr style="margin: 20px 0" />
-            <h3 style="margin-bottom: 10px">
-              Real-time Streaming Event Subscriptions
-            </h3>
-
-            <div id="realtimeEventsSection" class="form-group">
-              <div class="form-group">
-                <span class="event-group-label">Mixed Audio:</span>
-                <div class="event-item">
-                  <input
-                    type="checkbox"
-                    id="event_audio_mixed_raw_data"
-                    value="audio_mixed_raw.data"
-                    class="rt-event-checkbox"
-                  />
-                  <label for="event_audio_mixed_raw_data" class="checkbox-label"
-                    >audio_mixed_raw.data</label
-                  >
-                </div>
-              </div>
-
-              <div class="form-group">
-                <span class="event-group-label">Transcripts:</span>
-                <div class="event-item">
-                  <input
-                    type="checkbox"
-                    id="event_transcript_data"
-                    value="transcript.data"
-                    class="rt-event-checkbox"
-                  />
-                  <label for="event_transcript_data" class="checkbox-label"
-                    >transcript.data (Full)</label
-                  >
-                </div>
-                <div class="event-item">
-                  <input
-                    type="checkbox"
-                    id="event_transcript_partial_data"
-                    value="transcript.partial_data"
-                    class="rt-event-checkbox"
-                  />
-                  <label
-                    for="event_transcript_partial_data"
-                    class="checkbox-label"
-                    >transcript.partial_data (Partial)</label
-                  >
-                </div>
-              </div>
-
-              <div class="form-group">
-                <span class="event-group-label"
-                  >Separate Participant Video (PNG):</span
-                >
-                <div class="event-item">
-                  <input
-                    type="checkbox"
-                    id="event_video_separate_png_data"
-                    value="video_separate_png.data"
-                    class="rt-event-checkbox"
-                  />
-                  <label
-                    for="event_video_separate_png_data"
-                    class="checkbox-label"
-                    >video_separate_png.data</label
-                  >
-                </div>
-              </div>
-
-              <div class="form-group">
-                <span class="event-group-label"
-                  >Separate Participant Audio (RAW PCM):</span
-                >
-                <div class="event-item">
-                  <input
-                    type="checkbox"
-                    id="event_audio_separate_raw_data"
-                    value="audio_separate_raw.data"
-                    class="rt-event-checkbox"
-                  />
-                  <label
-                    for="event_audio_separate_raw_data"
-                    class="checkbox-label"
-                    >audio_separate_raw.data</label
-                  >
-                </div>
-              </div>
-
-              <div id="realtimeUrlGroup" class="form-group">
-                <label for="websocketUrl"
-                  >Public WebSocket URL (from ngrok - Required for real-time
-                  events):</label
-                >
-                <input
-                  type="url"
-                  id="websocketUrl"
-                  name="websocketUrl"
-                  placeholder="wss://your-ngrok-domain.ngrok-free.app"
-                  required
-                />
-              </div>
-            </div>
-
-            <button type="submit">Send Bot</button>
-          </form>
+    <div class="app">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h1 class="logo">MeetingMind</h1>
+          <span class="logo-subtitle">AI Meeting Intelligence</span>
         </div>
 
-        <div class="logs-column">
-          <div class="log-header">
-            <h2>Real-time Server Logs:</h2>
-          </div>
-          <div id="realTimeLog">Waiting for server events...</div>
-          <button id="toggleAutoScrollBtn" class="action-btn">
-            Pause Auto Scroll
+        <!-- Main Navigation -->
+        <nav class="main-nav">
+          <button class="nav-item active" data-view="dashboard">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            Dashboard
+          </button>
+          <button class="nav-item" data-view="meetings">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            </svg>
+            Meetings
+          </button>
+          <button class="nav-item" data-view="askAI">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            Ask MeetingMind
+          </button>
+          <button class="nav-item" data-view="actionItems">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            Action Items
+          </button>
+          <button class="nav-item" data-view="contacts">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            Contacts
+          </button>
+          <button class="nav-item" data-view="settings">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            Settings
+          </button>
+        </nav>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- Quick Actions -->
+        <div class="sidebar-section">
+          <button id="newMeetingBtn" class="btn btn-primary btn-full">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="16"></line>
+              <line x1="8" y1="12" x2="16" y2="12"></line>
+            </svg>
+            New Meeting
           </button>
         </div>
+
+        <div class="sidebar-footer">
+          <div class="status-indicator" id="statusIndicator">
+            <span class="status-dot"></span>
+            <span class="status-text">Ready</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <!-- Dashboard View (Default) -->
+        <div class="view active" id="dashboardView">
+          <header class="view-header">
+            <h1>Welcome to MeetingMind</h1>
+            <p class="view-subtitle">Your AI-powered meeting intelligence platform</p>
+          </header>
+
+          <!-- Quick Stats -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <span class="stat-value" id="totalMeetings">0</span>
+                <span class="stat-label">Total Meetings</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #34d399);">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <span class="stat-value" id="completedActions">0</span>
+                <span class="stat-label">Actions Completed</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <span class="stat-value" id="totalHours">0h</span>
+                <span class="stat-label">Meeting Time</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background: linear-gradient(135deg, #ec4899, #f472b6);">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <span class="stat-value" id="avgScore">--</span>
+                <span class="stat-label">Avg Meeting Score</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions Grid -->
+          <div class="dashboard-grid">
+            <div class="dashboard-card action-card" id="quickNewMeeting">
+              <div class="card-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="16"></line>
+                  <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+              </div>
+              <h3>Start New Meeting</h3>
+              <p>Send a bot to capture your meeting</p>
+            </div>
+
+            <div class="dashboard-card action-card" id="quickAskAI">
+              <div class="card-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+              </div>
+              <h3>Ask MeetingMind</h3>
+              <p>Search across all your meetings with AI</p>
+            </div>
+
+            <div class="dashboard-card action-card" id="quickActions">
+              <div class="card-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+              </div>
+              <h3>View Action Items</h3>
+              <p>See pending tasks from your meetings</p>
+            </div>
+
+            <div class="dashboard-card action-card" id="quickSettings">
+              <div class="card-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+              </div>
+              <h3>Auto-Join Settings</h3>
+              <p>Configure automatic meeting capture</p>
+            </div>
+          </div>
+
+          <!-- Recent Meetings -->
+          <div class="dashboard-section">
+            <div class="section-header">
+              <h2>Recent Meetings</h2>
+              <button class="btn btn-text" id="viewAllMeetings">View All</button>
+            </div>
+            <div class="recent-meetings-list" id="recentMeetingsList">
+              <div class="empty-state-inline">
+                <p>No meetings yet. Start your first meeting to see it here.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pending Actions -->
+          <div class="dashboard-section">
+            <div class="section-header">
+              <h2>Pending Action Items</h2>
+              <button class="btn btn-text" id="viewAllActions">View All</button>
+            </div>
+            <div class="pending-actions-list" id="pendingActionsList">
+              <div class="empty-state-inline">
+                <p>No pending action items. Action items from your meetings will appear here.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Meetings View -->
+        <div class="view" id="meetingsView">
+          <header class="view-header">
+            <h1>Meetings</h1>
+            <button class="btn btn-primary" id="newMeetingBtn2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              New Meeting
+            </button>
+          </header>
+          <div class="meetings-toolbar">
+            <input type="text" id="searchMeetings" placeholder="Search meetings..." class="search-input" />
+          </div>
+          <div class="meetings-grid" id="meetingsGrid">
+            <div class="empty-state">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              </svg>
+              <h3>No meetings yet</h3>
+              <p>Click "New Meeting" to start capturing your first meeting.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Meeting Detail View -->
+        <div class="view" id="meetingDetailView">
+          <header class="view-header meeting-detail-header">
+            <button class="btn btn-icon" id="backToMeetings">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+            </button>
+            <div class="meeting-header-info">
+              <h1 id="meetingTitle">Meeting Title</h1>
+              <span class="meeting-date" id="meetingDate">Date</span>
+            </div>
+            <div class="meeting-header-actions">
+              <button class="btn btn-icon" id="generateSummary" title="Generate AI Summary">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
+              </button>
+              <button class="btn btn-icon" id="generateEmail" title="Generate Follow-up Email">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                  <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+              </button>
+              <button class="btn btn-icon" id="getMeetingScore" title="Get Meeting Score">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="20" x2="18" y2="10"></line>
+                  <line x1="12" y1="20" x2="12" y2="4"></line>
+                  <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+              </button>
+            </div>
+          </header>
+          <div class="meeting-detail-content">
+            <div class="meeting-panels">
+              <!-- Summary Panel -->
+              <div class="panel">
+                <div class="panel-header"><h3>Summary</h3></div>
+                <div class="panel-body" id="summaryPanel">
+                  <p class="empty-text">Click the star button to generate an AI summary.</p>
+                </div>
+              </div>
+              <!-- Action Items Panel -->
+              <div class="panel">
+                <div class="panel-header"><h3>Action Items</h3></div>
+                <div class="panel-body" id="actionItemsPanel">
+                  <p class="empty-text">Action items will appear here.</p>
+                </div>
+              </div>
+              <!-- Transcript Panel -->
+              <div class="panel transcript-panel">
+                <div class="panel-header"><h3>Transcript</h3></div>
+                <div class="panel-body transcript-body" id="transcriptPanel">
+                  <p class="empty-text">Transcript will appear as the meeting progresses.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ask MeetingMind View -->
+        <div class="view" id="askAIView">
+          <header class="view-header">
+            <h1>Ask MeetingMind</h1>
+            <p class="view-subtitle">Search across all your meetings with AI</p>
+          </header>
+          <div class="ask-ai-container">
+            <div class="chat-messages" id="chatMessages">
+              <div class="chat-welcome">
+                <div class="chat-welcome-icon">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                  </svg>
+                </div>
+                <h2>How can I help you?</h2>
+                <p>Ask me anything about your meetings. For example:</p>
+                <div class="example-queries">
+                  <button class="example-query">"What did we decide about the pricing?"</button>
+                  <button class="example-query">"What action items were assigned to Sarah?"</button>
+                  <button class="example-query">"Summarize last week's team standup"</button>
+                </div>
+              </div>
+            </div>
+            <div class="chat-input-container">
+              <input type="text" id="chatInput" placeholder="Ask a question about your meetings..." class="chat-input" />
+              <button class="btn btn-primary" id="sendChatBtn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Items View -->
+        <div class="view" id="actionItemsView">
+          <header class="view-header">
+            <h1>Action Items</h1>
+            <div class="filter-tabs">
+              <button class="filter-tab active" data-filter="pending">Pending</button>
+              <button class="filter-tab" data-filter="completed">Completed</button>
+              <button class="filter-tab" data-filter="all">All</button>
+            </div>
+          </header>
+          <div class="action-items-list" id="allActionItemsList">
+            <div class="empty-state">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              <h3>No action items yet</h3>
+              <p>Action items from your meetings will appear here.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contacts View -->
+        <div class="view" id="contactsView">
+          <header class="view-header">
+            <h1>Contacts</h1>
+            <button class="btn btn-primary" id="addContactBtn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Add Contact
+            </button>
+          </header>
+          <div class="contacts-grid" id="contactsGrid">
+            <div class="empty-state">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <h3>No contacts yet</h3>
+              <p>Add contacts to link them to your meetings.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Settings View -->
+        <div class="view" id="settingsView">
+          <header class="view-header">
+            <h1>Settings</h1>
+          </header>
+          <div class="settings-content">
+            <!-- Auto-Join Section -->
+            <section class="settings-section">
+              <h2>Auto-Join Meetings</h2>
+              <p class="section-description">Automatically send the bot to your scheduled meetings.</p>
+              <div class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-label">Enable Auto-Join</span>
+                  <span class="setting-description">Bot will automatically join calendar meetings</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="autoJoinToggle" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-label">Join Before Meeting</span>
+                  <span class="setting-description">Minutes before meeting start time</span>
+                </div>
+                <select id="joinMinutesBefore" class="form-select-small">
+                  <option value="1">1 minute</option>
+                  <option value="2">2 minutes</option>
+                  <option value="5">5 minutes</option>
+                </select>
+              </div>
+              <div class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-label">Default Bot Name</span>
+                  <span class="setting-description">Name shown in meetings</span>
+                </div>
+                <input type="text" id="defaultBotName" placeholder="MeetingMind Notetaker" class="form-input-small" />
+              </div>
+              <button class="btn btn-primary" id="saveSettingsBtn">Save Settings</button>
+            </section>
+
+            <!-- AI Settings -->
+            <section class="settings-section">
+              <h2>AI Features</h2>
+              <p class="section-description">Configure AI-powered features.</p>
+              <div class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-label">Auto-Summarize</span>
+                  <span class="setting-description">Generate summary when meeting ends</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="autoSummarizeToggle" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-label">Auto-Detect Action Items</span>
+                  <span class="setting-description">Extract action items from transcripts</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="autoActionItemsToggle" checked />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </section>
+
+            <!-- Connection Status -->
+            <section class="settings-section">
+              <h2>Connection Status</h2>
+              <div class="connection-status">
+                <div class="status-item">
+                  <span class="status-label">OpenAI API</span>
+                  <span class="status-badge" id="openaiStatus">Checking...</span>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">Recall.ai</span>
+                  <span class="status-badge" id="recallStatus">Checking...</span>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- New Meeting Modal -->
+    <div class="modal" id="newMeetingModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Join a Meeting</h2>
+          <button class="modal-close" id="closeModal">&times;</button>
+        </div>
+        <form id="newMeetingForm">
+          <div class="form-group">
+            <label for="meetingUrl">Meeting URL</label>
+            <input type="url" id="meetingUrl" placeholder="https://meet.google.com/... or zoom.us/j/..." required />
+          </div>
+          <div class="form-group">
+            <label for="botName">Bot Name (optional)</label>
+            <input type="text" id="botName" placeholder="MeetingMind Notetaker" />
+          </div>
+          <div class="form-group">
+            <label for="websocketUrl">Public WebSocket URL (ngrok)</label>
+            <input type="url" id="websocketUrl" placeholder="wss://your-ngrok-url.ngrok-free.app" required />
+            <span class="form-hint">Run `ngrok http 3456` to get this URL</span>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" id="cancelNewMeeting">Cancel</button>
+            <button type="submit" class="btn btn-primary">Send Bot</button>
+          </div>
+        </form>
       </div>
     </div>
 
-    <script>
-      const sendBotForm = document.getElementById("sendBotForm");
-      const realTimeLog = document.getElementById("realTimeLog");
-      const websocketUrlInput = document.getElementById("websocketUrl");
-      const toggleAutoScrollBtn = document.getElementById(
-        "toggleAutoScrollBtn"
-      );
-      const rtEventCheckboxes = document.querySelectorAll(".rt-event-checkbox");
+    <!-- Contact Modal -->
+    <div class="modal" id="contactModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Add Contact</h2>
+          <button class="modal-close" id="closeContactModal">&times;</button>
+        </div>
+        <form id="contactForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="contactFirstName">First Name</label>
+              <input type="text" id="contactFirstName" required />
+            </div>
+            <div class="form-group">
+              <label for="contactLastName">Last Name</label>
+              <input type="text" id="contactLastName" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="contactEmail">Email</label>
+            <input type="email" id="contactEmail" />
+          </div>
+          <div class="form-group">
+            <label for="contactTitle">Title</label>
+            <input type="text" id="contactTitle" placeholder="e.g. Product Manager" />
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" id="cancelContact">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Contact</button>
+          </div>
+        </form>
+      </div>
+    </div>
 
-      let autoScrollEnabled = true;
-
-      toggleAutoScrollBtn.addEventListener("click", () => {
-        autoScrollEnabled = !autoScrollEnabled;
-        if (autoScrollEnabled) {
-          toggleAutoScrollBtn.textContent = "Pause Auto Scroll";
-          realTimeLog.scrollTop = realTimeLog.scrollHeight;
-        } else {
-          toggleAutoScrollBtn.textContent = "Resume Auto Scroll";
-        }
-      });
-
-      sendBotForm.addEventListener("submit", async function (event) {
-        event.preventDefault();
-        realTimeLog.textContent = "Sending request to Recall.ai API...\n";
-
-        const meetingUrl = document.getElementById("meetingUrl").value;
-        const botName = document.getElementById("botName").value;
-        const wsUrl = websocketUrlInput.value;
-
-        const payload = { meeting_url: meetingUrl };
-        if (botName) {
-          payload.bot_name = botName;
-        }
-
-        const eventsToRequest = [];
-        rtEventCheckboxes.forEach((checkbox) => {
-          if (checkbox.checked) {
-            eventsToRequest.push(checkbox.value);
-          }
-        });
-
-        if (eventsToRequest.length > 0 && !wsUrl) {
-          const errorMsg =
-            "Error: Public WebSocket URL is required when subscribing to real-time events.";
-          console.error(errorMsg);
-          const errorEntry = document.createElement("div");
-          errorEntry.textContent = `[CLIENT VALIDATION] ${errorMsg}`;
-          realTimeLog.appendChild(errorEntry);
-          return;
-        }
-
-        if (eventsToRequest.length > 0) {
-          payload.recording_config = {};
-
-          if (eventsToRequest.includes("audio_mixed_raw.data")) {
-            payload.recording_config.audio_mixed_raw = {};
-          }
-          if (
-            eventsToRequest.includes("transcript.data") ||
-            eventsToRequest.includes("transcript.partial_data")
-          ) {
-            payload.recording_config.transcript = {
-              provider: { meeting_captions: {} },
-            };
-          }
-          if (eventsToRequest.includes("video_separate_png.data")) {
-            payload.recording_config.video_mixed_layout = "gallery_view_v2";
-            payload.recording_config.video_separate_png = {};
-          }
-          if (eventsToRequest.includes("audio_separate_raw.data")) {
-            payload.recording_config.audio_separate_raw = {};
-          }
-
-          payload.recording_config.realtime_endpoints = [
-            {
-              type: "websocket",
-              url: wsUrl,
-              events: eventsToRequest,
-            },
-          ];
-        } else if (wsUrl && wsUrl.trim() !== "") {
-          console.log(
-            "WebSocket URL provided but no real-time events selected. Ignoring WebSocket URL for this request."
-          );
-        }
-
-        console.log("Sending payload:", JSON.stringify(payload, null, 2));
-
-        try {
-          await fetch("/send-bot", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(payload),
-          });
-        } catch (error) {
-          console.error("Error sending bot (fetch failed):", error);
-          const errorEntry = document.createElement("div");
-          errorEntry.textContent =
-            "[NETWORK ERROR] Failed to send request to /send-bot. Check server console.";
-          realTimeLog.appendChild(errorEntry);
-        }
-      });
-
-      const uiSocketProtocol =
-        window.location.protocol === "https:" ? "wss:" : "ws:";
-      const uiSocket = new WebSocket(
-        `${uiSocketProtocol}//${window.location.host}/ui-updates`
-      );
-
-      uiSocket.onopen = () => {
-        const initialEntry = document.createElement("div");
-        initialEntry.textContent =
-          "Connected to server for real-time updates.\n";
-        realTimeLog.appendChild(initialEntry);
-        console.log("UI WebSocket connected");
-        if (autoScrollEnabled) {
-          realTimeLog.scrollTop = realTimeLog.scrollHeight;
-        }
-      };
-
-      uiSocket.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data);
-          const timestamp = `[${new Date(
-            message.timestamp || Date.now()
-          ).toLocaleTimeString()}]`;
-          let logText = message.log;
-          if (message.data) {
-            logText += ` ${
-              typeof message.data === "object"
-                ? JSON.stringify(message.data, null, 2)
-                : message.data
-            }`;
-          }
-
-          const logEntry = document.createElement("div");
-          const timeSpan = document.createElement("span");
-          timeSpan.className = "log-timestamp";
-          timeSpan.textContent = timestamp;
-
-          const textNode = document.createTextNode(logText);
-
-          logEntry.appendChild(timeSpan);
-          logEntry.appendChild(textNode);
-
-          realTimeLog.appendChild(logEntry);
-          if (autoScrollEnabled) {
-            realTimeLog.scrollTop = realTimeLog.scrollHeight;
-          }
-        } catch (e) {
-          console.error(
-            "Error processing UI WebSocket message:",
-            e,
-            event.data
-          );
-          const rawEntry = document.createElement("div");
-          rawEntry.textContent = `[RAW] ${event.data}`;
-          realTimeLog.appendChild(rawEntry);
-          if (autoScrollEnabled) {
-            realTimeLog.scrollTop = realTimeLog.scrollHeight;
-          }
-        }
-      };
-
-      uiSocket.onerror = (error) => {
-        console.error("UI WebSocket Error:", error);
-        const errorEntry = document.createElement("div");
-        errorEntry.textContent =
-          "Error connecting to real-time log server. Check console.\n";
-        realTimeLog.appendChild(errorEntry);
-        if (autoScrollEnabled) {
-          realTimeLog.scrollTop = realTimeLog.scrollHeight;
-        }
-      };
-
-      uiSocket.onclose = () => {
-        console.log("UI WebSocket disconnected");
-        const closeEntry = document.createElement("div");
-        closeEntry.textContent = "Disconnected from real-time log server.\n";
-        realTimeLog.appendChild(closeEntry);
-        if (autoScrollEnabled) {
-          realTimeLog.scrollTop = realTimeLog.scrollHeight;
-        }
-      };
-    </script>
+    <script src="app.js"></script>
   </body>
 </html>
