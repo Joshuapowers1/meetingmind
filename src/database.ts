@@ -53,11 +53,14 @@
 
 import Database from "better-sqlite3";
 import path from "path";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID as uuidv4 } from "crypto";
+import fs from "fs";
+import "dotenv/config";
 import crypto from "crypto";
 
 // Initialize SQLite database (stored locally in ./data/meetings.db)
-const dbPath = path.join(__dirname, "..", "data", "meetings.db");
+const dbPath = process.env.DATABASE_PATH || path.join(__dirname, "..", "data", "meetings.db");
+fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 const db = new Database(dbPath);
 
 // Enable WAL mode for better performance
@@ -626,15 +629,12 @@ export function getMeetingByShareToken(token: string) {
 }
 
 export function deleteMeeting(id: string): void {
-  db.prepare("DELETE FROM transcripts WHERE meeting_id = ?").run(id);
-  db.prepare("DELETE FROM keywords WHERE meeting_id = ?").run(id);
-  db.prepare("DELETE FROM notes WHERE meeting_id = ?").run(id);
-  db.prepare("DELETE FROM action_items WHERE meeting_id = ?").run(id);
-  db.prepare("DELETE FROM comments WHERE meeting_id = ?").run(id);
-  db.prepare("DELETE FROM shares WHERE meeting_id = ?").run(id);
-  db.prepare("DELETE FROM contact_meetings WHERE meeting_id = ?").run(id);
-  db.prepare("DELETE FROM speaker_stats WHERE meeting_id = ?").run(id);
-  db.prepare("DELETE FROM meetings WHERE id = ?").run(id);
+  db.transaction(() => {
+    const children = ["highlights", "keywords", "comments", "notes", "action_items", "shares", "contact_meetings", "speaker_stats", "meeting_tags", "exports", "email_summaries", "enhanced_notes", "followup_emails", "meeting_scores", "transcripts", "participants"];
+    for (const table of children) db.prepare(`DELETE FROM ${table} WHERE meeting_id = ?`).run(id);
+    db.prepare("UPDATE calendar_events SET meeting_id = NULL WHERE meeting_id = ?").run(id);
+    db.prepare("DELETE FROM meetings WHERE id = ?").run(id);
+  })();
 }
 
 // ==================== PARTICIPANT FUNCTIONS ====================
@@ -698,7 +698,7 @@ export function addTranscript(data: {
 
 export function getTranscripts(meetingId: string) {
   return db.prepare(
-    "SELECT * FROM transcripts WHERE meeting_id = ? AND is_final = 1 ORDER BY timestamp_relative ASC"
+    "SELECT * FROM transcripts WHERE meeting_id = ? AND is_final = 1 ORDER BY COALESCE(timestamp_relative, 0) ASC, created_at ASC, rowid ASC"
   ).all(meetingId);
 }
 
@@ -1668,7 +1668,7 @@ export function getMeetingContext(meetingIds: string[]) {
   `).all(...meetingIds);
 
   const transcripts = db.prepare(`
-    SELECT * FROM transcripts WHERE meeting_id IN (${placeholders}) AND is_final = 1 ORDER BY timestamp_relative ASC
+    SELECT * FROM transcripts WHERE meeting_id IN (${placeholders}) AND is_final = 1 ORDER BY COALESCE(timestamp_relative, 0) ASC, created_at ASC, rowid ASC
   `).all(...meetingIds);
 
   const keywords = db.prepare(`

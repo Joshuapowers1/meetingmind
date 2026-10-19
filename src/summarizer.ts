@@ -219,7 +219,7 @@ export function generateOfflineSummary(
     title: topicKeywords[0]?.keyword
       ? `Meeting about ${topicKeywords[0].keyword}`
       : "Meeting Notes",
-    summary: `Meeting with ${speakers.size} participants. ${actionKeywords.length} action items identified, ${decisionKeywords.length} decisions made.`,
+    summary: `Meeting with ${speakers.size} participants. ${actionKeywords.length} possible action items and ${decisionKeywords.length} decision signals detected by keywords. Review these excerpts to confirm.`,
     keyPoints: topicKeywords.slice(0, 5).map(k => `Discussed: ${k.keyword}`),
     actionItems: actionKeywords.slice(0, 10).map(k => ({
       description: k.keyword,
