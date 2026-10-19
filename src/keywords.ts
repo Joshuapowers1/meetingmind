@@ -91,6 +91,8 @@ function getContext(text: string, matchIndex: number, matchLength: number, conte
  */
 function detectActionItems(text: string): DetectedKeyword[] {
   const results: DetectedKeyword[] = [];
+  // Questions about commitments are not commitments themselves.
+  text = (text.match(/[^.!?]+[.!?]?/g) || []).filter(sentence => !sentence.trim().endsWith("?")).join(" ");
 
   for (const pattern of ACTION_PATTERNS) {
     let match;

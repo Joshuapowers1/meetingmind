@@ -56,6 +56,7 @@ import {
 } from "./types";
 
 import * as db from "./database";
+import { registerWorkspaceRoutes } from "./workspace";
 import { analyzeTranscriptLine, analyzeText, DetectedKeyword } from "./keywords";
 import {
   generateMeetingSummary,
@@ -120,9 +121,10 @@ uiWss.on("connection", (ws) => {
 
 // --- Express Setup ---
 app.use(express.static(path.join(__dirname, "..", "public")));
-app.use(express.json());
+app.use(express.json({ limit: "256kb" }));
+registerWorkspaceRoutes(app, sendToUIClients);
 
-app.get("/", (req: express.Request, res: express.Response) => {
+app.get("/", (req: express.Request<Record<string, string>>, res: express.Response) => {
   res.sendFile(path.join(__dirname, "..", "public", "index.html"));
 });
 
@@ -139,7 +141,7 @@ app.get("/api/meetings", (req, res) => {
 });
 
 // Get single meeting with all data
-app.get("/api/meetings/:id", (req: express.Request, res: express.Response) => {
+app.get("/api/meetings/:id", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const meeting = db.getMeeting(req.params.id) as any;
     if (!meeting) {
@@ -168,7 +170,7 @@ app.get("/api/meetings/:id", (req: express.Request, res: express.Response) => {
 });
 
 // Generate summary for a meeting
-app.post("/api/meetings/:id/summarize", async (req: express.Request, res: express.Response) => {
+app.post("/api/meetings/:id/summarize", async (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const meetingId = req.params.id;
     const fullTranscript = db.getFullTranscript(meetingId);
@@ -203,9 +205,13 @@ app.post("/api/meetings/:id/summarize", async (req: express.Request, res: expres
       content: JSON.stringify(summary),
     });
 
-    // Save action items
+    // Avoid duplicating tasks when the summary is regenerated.
+    const existingActions = new Set((db.getActionItems(meetingId) as any[]).map(item => JSON.stringify([item.description, item.assignee || ""])));
     if (summary.actionItems) {
       for (const item of summary.actionItems) {
+        const actionKey = JSON.stringify([item.description, item.assignee || ""]);
+        if (existingActions.has(actionKey)) continue;
+        existingActions.add(actionKey);
         db.addActionItem({
           meeting_id: meetingId,
           description: item.description,
@@ -223,7 +229,7 @@ app.post("/api/meetings/:id/summarize", async (req: express.Request, res: expres
 });
 
 // Search meetings
-app.get("/api/search", (req: express.Request, res: express.Response) => {
+app.get("/api/search", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const query = req.query.q as string;
     if (!query) {
@@ -238,7 +244,7 @@ app.get("/api/search", (req: express.Request, res: express.Response) => {
 });
 
 // Global search (meetings, contacts, companies, action items)
-app.get("/api/search/all", (req: express.Request, res: express.Response) => {
+app.get("/api/search/all", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const query = req.query.q as string;
     if (!query) {
@@ -253,7 +259,7 @@ app.get("/api/search/all", (req: express.Request, res: express.Response) => {
 });
 
 // Delete a meeting
-app.delete("/api/meetings/:id", (req: express.Request, res: express.Response) => {
+app.delete("/api/meetings/:id", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     db.deleteMeeting(req.params.id);
     res.json({ success: true });
@@ -263,7 +269,7 @@ app.delete("/api/meetings/:id", (req: express.Request, res: express.Response) =>
 });
 
 // Update meeting
-app.patch("/api/meetings/:id", (req: express.Request, res: express.Response) => {
+app.patch("/api/meetings/:id", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     db.updateMeeting(req.params.id, req.body);
     const meeting = db.getMeeting(req.params.id);
@@ -275,7 +281,7 @@ app.patch("/api/meetings/:id", (req: express.Request, res: express.Response) => 
 
 // --- CRM: COMPANIES ---
 
-app.get("/api/companies", (req: express.Request, res: express.Response) => {
+app.get("/api/companies", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const companies = db.getAllCompanies();
     res.json(companies);
@@ -284,7 +290,7 @@ app.get("/api/companies", (req: express.Request, res: express.Response) => {
   }
 });
 
-app.get("/api/companies/:id", (req: express.Request, res: express.Response) => {
+app.get("/api/companies/:id", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const company = db.getCompanyWithStats(req.params.id);
     if (!company) {
@@ -297,7 +303,7 @@ app.get("/api/companies/:id", (req: express.Request, res: express.Response) => {
   }
 });
 
-app.post("/api/companies", (req: express.Request, res: express.Response) => {
+app.post("/api/companies", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const id = db.createCompany(req.body);
     const company = db.getCompany(id);
@@ -307,7 +313,7 @@ app.post("/api/companies", (req: express.Request, res: express.Response) => {
   }
 });
 
-app.patch("/api/companies/:id", (req: express.Request, res: express.Response) => {
+app.patch("/api/companies/:id", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     db.updateCompany(req.params.id, req.body);
     const company = db.getCompany(req.params.id);
@@ -317,7 +323,7 @@ app.patch("/api/companies/:id", (req: express.Request, res: express.Response) =>
   }
 });
 
-app.delete("/api/companies/:id", (req: express.Request, res: express.Response) => {
+app.delete("/api/companies/:id", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     db.deleteCompany(req.params.id);
     res.json({ success: true });
@@ -328,7 +334,7 @@ app.delete("/api/companies/:id", (req: express.Request, res: express.Response) =
 
 // --- CRM: CONTACTS ---
 
-app.get("/api/contacts", (req: express.Request, res: express.Response) => {
+app.get("/api/contacts", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const options: any = {};
     if (req.query.company_id) options.company_id = req.query.company_id;
@@ -340,7 +346,7 @@ app.get("/api/contacts", (req: express.Request, res: express.Response) => {
   }
 });
 
-app.get("/api/contacts/:id", (req: express.Request, res: express.Response) => {
+app.get("/api/contacts/:id", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const contact = db.getContact(req.params.id);
     if (!contact) {
@@ -354,7 +360,7 @@ app.get("/api/contacts/:id", (req: express.Request, res: express.Response) => {
   }
 });
 
-app.post("/api/contacts", (req: express.Request, res: express.Response) => {
+app.post("/api/contacts", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const id = db.createContact(req.body);
     const contact = db.getContact(id);
@@ -364,7 +370,7 @@ app.post("/api/contacts", (req: express.Request, res: express.Response) => {
   }
 });
 
-app.patch("/api/contacts/:id", (req: express.Request, res: express.Response) => {
+app.patch("/api/contacts/:id", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     db.updateContact(req.params.id, req.body);
     const contact = db.getContact(req.params.id);
@@ -374,7 +380,7 @@ app.patch("/api/contacts/:id", (req: express.Request, res: express.Response) => 
   }
 });
 
-app.delete("/api/contacts/:id", (req: express.Request, res: express.Response) => {
+app.delete("/api/contacts/:id", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     db.deleteContact(req.params.id);
     res.json({ success: true });
@@ -383,7 +389,7 @@ app.delete("/api/contacts/:id", (req: express.Request, res: express.Response) =>
   }
 });
 
-app.post("/api/contacts/:id/meetings/:meetingId", (req: express.Request, res: express.Response) => {
+app.post("/api/contacts/:id/meetings/:meetingId", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     db.linkContactToMeeting(req.params.id, req.params.meetingId, req.body.role);
     res.json({ success: true });
@@ -394,7 +400,7 @@ app.post("/api/contacts/:id/meetings/:meetingId", (req: express.Request, res: ex
 
 // --- ACTION ITEMS ---
 
-app.get("/api/action-items", (req: express.Request, res: express.Response) => {
+app.get("/api/action-items", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const options: any = {};
     if (req.query.status) options.status = req.query.status;
@@ -407,7 +413,7 @@ app.get("/api/action-items", (req: express.Request, res: express.Response) => {
   }
 });
 
-app.patch("/api/action-items/:id", (req: express.Request, res: express.Response) => {
+app.patch("/api/action-items/:id", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     db.updateActionItem(req.params.id, req.body);
     res.json({ success: true });
@@ -417,7 +423,7 @@ app.patch("/api/action-items/:id", (req: express.Request, res: express.Response)
 });
 
 // PUT alias for PATCH (for frontend compatibility)
-app.put("/api/action-items/:id", (req: express.Request, res: express.Response) => {
+app.put("/api/action-items/:id", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     db.updateActionItem(req.params.id, req.body);
     res.json({ success: true });
@@ -426,7 +432,7 @@ app.put("/api/action-items/:id", (req: express.Request, res: express.Response) =
   }
 });
 
-app.delete("/api/action-items/:id", (req: express.Request, res: express.Response) => {
+app.delete("/api/action-items/:id", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     db.deleteActionItem(req.params.id);
     res.json({ success: true });
@@ -438,7 +444,7 @@ app.delete("/api/action-items/:id", (req: express.Request, res: express.Response
 // --- ANALYTICS ---
 
 // Simple analytics endpoint for dashboard stats
-app.get("/api/analytics", (req: express.Request, res: express.Response) => {
+app.get("/api/analytics", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const meetings = db.getAllMeetings();
     const actionItems = db.getAllActionItems({});
@@ -447,7 +453,7 @@ app.get("/api/analytics", (req: express.Request, res: express.Response) => {
     res.json({
       total_meetings: meetings.length,
       completed_actions: completedItems.length,
-      total_hours: Math.round(meetings.length * 0.5), // Estimate
+      total_hours: Math.round(meetings.reduce((sum: number, m: any) => sum + (m.duration_seconds || 0), 0) / 360) / 10,
       avg_score: '--'
     });
   } catch (error) {
@@ -455,7 +461,7 @@ app.get("/api/analytics", (req: express.Request, res: express.Response) => {
   }
 });
 
-app.get("/api/analytics/dashboard", (req: express.Request, res: express.Response) => {
+app.get("/api/analytics/dashboard", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const dashboard = db.getAnalyticsDashboard();
     res.json(dashboard);
@@ -464,7 +470,7 @@ app.get("/api/analytics/dashboard", (req: express.Request, res: express.Response
   }
 });
 
-app.get("/api/analytics/meetings/:id/speakers", (req: express.Request, res: express.Response) => {
+app.get("/api/analytics/meetings/:id/speakers", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const stats = db.getSpeakerStats(req.params.id);
     res.json(stats);
@@ -475,7 +481,7 @@ app.get("/api/analytics/meetings/:id/speakers", (req: express.Request, res: expr
 
 // --- COLLABORATION: COMMENTS ---
 
-app.get("/api/meetings/:id/comments", (req: express.Request, res: express.Response) => {
+app.get("/api/meetings/:id/comments", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const comments = db.getComments(req.params.id);
     res.json(comments);
@@ -484,7 +490,7 @@ app.get("/api/meetings/:id/comments", (req: express.Request, res: express.Respon
   }
 });
 
-app.post("/api/meetings/:id/comments", (req: express.Request, res: express.Response) => {
+app.post("/api/meetings/:id/comments", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const id = db.addComment({
       meeting_id: req.params.id,
@@ -496,7 +502,7 @@ app.post("/api/meetings/:id/comments", (req: express.Request, res: express.Respo
   }
 });
 
-app.patch("/api/comments/:id", (req: express.Request, res: express.Response) => {
+app.patch("/api/comments/:id", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     db.updateComment(req.params.id, req.body.content);
     res.json({ success: true });
@@ -505,7 +511,7 @@ app.patch("/api/comments/:id", (req: express.Request, res: express.Response) => 
   }
 });
 
-app.delete("/api/comments/:id", (req: express.Request, res: express.Response) => {
+app.delete("/api/comments/:id", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     db.deleteComment(req.params.id);
     res.json({ success: true });
@@ -516,7 +522,7 @@ app.delete("/api/comments/:id", (req: express.Request, res: express.Response) =>
 
 // --- COLLABORATION: SHARING ---
 
-app.post("/api/meetings/:id/share", (req: express.Request, res: express.Response) => {
+app.post("/api/meetings/:id/share", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const share = db.createShare({
       meeting_id: req.params.id,
@@ -528,7 +534,7 @@ app.post("/api/meetings/:id/share", (req: express.Request, res: express.Response
   }
 });
 
-app.get("/api/share/:token", (req: express.Request, res: express.Response) => {
+app.get("/api/share/:token", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const meeting = db.getMeetingByShareToken(req.params.token);
     if (!meeting) {
@@ -553,7 +559,7 @@ app.get("/api/share/:token", (req: express.Request, res: express.Response) => {
   }
 });
 
-app.delete("/api/shares/:id", (req: express.Request, res: express.Response) => {
+app.delete("/api/shares/:id", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     db.deleteShare(req.params.id);
     res.json({ success: true });
@@ -564,7 +570,7 @@ app.delete("/api/shares/:id", (req: express.Request, res: express.Response) => {
 
 // --- COLLABORATION: FOLDERS ---
 
-app.get("/api/folders", (req: express.Request, res: express.Response) => {
+app.get("/api/folders", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const folders = db.getAllFolders();
     res.json(folders);
@@ -573,7 +579,7 @@ app.get("/api/folders", (req: express.Request, res: express.Response) => {
   }
 });
 
-app.post("/api/folders", (req: express.Request, res: express.Response) => {
+app.post("/api/folders", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const id = db.createFolder(req.body);
     res.status(201).json({ id });
@@ -582,7 +588,7 @@ app.post("/api/folders", (req: express.Request, res: express.Response) => {
   }
 });
 
-app.patch("/api/folders/:id", (req: express.Request, res: express.Response) => {
+app.patch("/api/folders/:id", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     db.updateFolder(req.params.id, req.body);
     res.json({ success: true });
@@ -591,7 +597,7 @@ app.patch("/api/folders/:id", (req: express.Request, res: express.Response) => {
   }
 });
 
-app.delete("/api/folders/:id", (req: express.Request, res: express.Response) => {
+app.delete("/api/folders/:id", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     db.deleteFolder(req.params.id);
     res.json({ success: true });
@@ -602,7 +608,7 @@ app.delete("/api/folders/:id", (req: express.Request, res: express.Response) => 
 
 // --- COLLABORATION: TAGS ---
 
-app.get("/api/tags", (req: express.Request, res: express.Response) => {
+app.get("/api/tags", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const tags = db.getAllTags();
     res.json(tags);
@@ -611,7 +617,7 @@ app.get("/api/tags", (req: express.Request, res: express.Response) => {
   }
 });
 
-app.post("/api/tags", (req: express.Request, res: express.Response) => {
+app.post("/api/tags", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const id = db.createTag(req.body.name, req.body.color);
     res.status(201).json({ id });
@@ -620,7 +626,7 @@ app.post("/api/tags", (req: express.Request, res: express.Response) => {
   }
 });
 
-app.delete("/api/tags/:id", (req: express.Request, res: express.Response) => {
+app.delete("/api/tags/:id", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     db.deleteTag(req.params.id);
     res.json({ success: true });
@@ -629,7 +635,7 @@ app.delete("/api/tags/:id", (req: express.Request, res: express.Response) => {
   }
 });
 
-app.post("/api/meetings/:meetingId/tags/:tagId", (req: express.Request, res: express.Response) => {
+app.post("/api/meetings/:meetingId/tags/:tagId", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     db.addTagToMeeting(req.params.meetingId, req.params.tagId);
     res.json({ success: true });
@@ -638,7 +644,7 @@ app.post("/api/meetings/:meetingId/tags/:tagId", (req: express.Request, res: exp
   }
 });
 
-app.delete("/api/meetings/:meetingId/tags/:tagId", (req: express.Request, res: express.Response) => {
+app.delete("/api/meetings/:meetingId/tags/:tagId", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     db.removeTagFromMeeting(req.params.meetingId, req.params.tagId);
     res.json({ success: true });
@@ -647,7 +653,7 @@ app.delete("/api/meetings/:meetingId/tags/:tagId", (req: express.Request, res: e
   }
 });
 
-app.get("/api/meetings/:id/tags", (req: express.Request, res: express.Response) => {
+app.get("/api/meetings/:id/tags", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const tags = db.getMeetingTags(req.params.id);
     res.json(tags);
@@ -658,7 +664,7 @@ app.get("/api/meetings/:id/tags", (req: express.Request, res: express.Response) 
 
 // --- INTEGRATIONS: WEBHOOKS ---
 
-app.get("/api/webhooks", (req: express.Request, res: express.Response) => {
+app.get("/api/webhooks", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const webhooks = db.getWebhooks();
     res.json(webhooks);
@@ -667,7 +673,7 @@ app.get("/api/webhooks", (req: express.Request, res: express.Response) => {
   }
 });
 
-app.post("/api/webhooks", (req: express.Request, res: express.Response) => {
+app.post("/api/webhooks", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const id = db.createWebhook(req.body);
     const webhook = db.getWebhook(id);
@@ -677,7 +683,7 @@ app.post("/api/webhooks", (req: express.Request, res: express.Response) => {
   }
 });
 
-app.patch("/api/webhooks/:id", (req: express.Request, res: express.Response) => {
+app.patch("/api/webhooks/:id", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     db.updateWebhook(req.params.id, req.body);
     const webhook = db.getWebhook(req.params.id);
@@ -687,7 +693,7 @@ app.patch("/api/webhooks/:id", (req: express.Request, res: express.Response) => 
   }
 });
 
-app.delete("/api/webhooks/:id", (req: express.Request, res: express.Response) => {
+app.delete("/api/webhooks/:id", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     db.deleteWebhook(req.params.id);
     res.json({ success: true });
@@ -698,7 +704,7 @@ app.delete("/api/webhooks/:id", (req: express.Request, res: express.Response) =>
 
 // --- INTEGRATIONS: EXPORTS ---
 
-app.post("/api/meetings/:id/export", async (req: express.Request, res: express.Response) => {
+app.post("/api/meetings/:id/export", async (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const { format } = req.body;
     const meetingId = req.params.id;
@@ -791,7 +797,7 @@ app.post("/api/meetings/:id/export", async (req: express.Request, res: express.R
 
 // --- INTEGRATIONS: CALENDAR ---
 
-app.get("/api/calendar", (req: express.Request, res: express.Response) => {
+app.get("/api/calendar", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const minutes = parseInt(req.query.minutes as string) || 60;
     const events = db.getUpcomingCalendarEvents(minutes);
@@ -801,7 +807,7 @@ app.get("/api/calendar", (req: express.Request, res: express.Response) => {
   }
 });
 
-app.post("/api/calendar", (req: express.Request, res: express.Response) => {
+app.post("/api/calendar", (req: express.Request<Record<string, string>>, res: express.Response) => {
   try {
     const id = db.addCalendarEvent(req.body);
     res.status(201).json({ id });
@@ -1050,7 +1056,7 @@ app.get("/api/ai/conversations/:id/messages", (req, res) => {
 
 app.post("/api/ai/conversations/:id/messages", (async (req, res) => {
   const { content, meeting_ids } = req.body;
-  const conversationId = req.params.id;
+  const conversationId = String(req.params.id);
 
   // Save user message
   db.addAIMessage({
@@ -1592,7 +1598,7 @@ app.post("/api/auto-join/stop", (req, res) => {
 // =============================================================================
 
 // --- WebSocket Server for Recall.ai Bot ---
-const recallBotWss = new WebSocket.Server({ port: websocketPort });
+const recallBotWss = new WebSocket.Server({ port: websocketPort, host: process.env.RECALL_HOST || "127.0.0.1", maxPayload: 1024 * 1024 });
 
 // Track active meetings by recording ID
 const activeMeetings = new Map<string, string>();
@@ -1635,18 +1641,14 @@ recallBotWss.on("connection", (ws) => {
           }
         }
 
-        if (!meetingId) {
-          console.log("No meeting found for transcript, creating new one");
-          meetingId = db.createMeeting({
-            meeting_url: "unknown",
-            title: "Untitled Meeting",
-          });
-          const newRecordingId = data.recording?.id;
-          if (newRecordingId) {
-            activeMeetings.set(newRecordingId, meetingId);
-            db.updateMeeting(meetingId, { recording_id: newRecordingId });
-          }
+        if (!meetingId && data.bot?.id) {
+          meetingId = (db.getMeetingByBotId(data.bot.id) as any)?.id;
         }
+        if (!meetingId) {
+          // Ignore unknown senders; never create orphan meetings from arbitrary events.
+          return;
+        }
+        if (!db.getMeeting(meetingId)) return;
 
         // Process transcript
         if (data.data?.words && data.data.words.length > 0) {
@@ -1661,7 +1663,9 @@ recallBotWss.on("connection", (ws) => {
               speaker_name: speakerName,
               text: text,
               is_final: true,
-              timestamp_relative: data.data.words[0]?.start_timestamp,
+              timestamp_relative: typeof data.data.words[0]?.start_timestamp === "number"
+                ? data.data.words[0].start_timestamp
+                : data.data.words[0]?.start_timestamp?.relative,
               timestamp_absolute: data.data.timestamp?.absolute,
             });
 
@@ -1678,7 +1682,9 @@ recallBotWss.on("connection", (ws) => {
             }
 
             // Broadcast to UI
-            broadcastToUIClients("Transcript received", {
+            sendToUIClients("transcript", {
+              meeting_id: meetingId,
+              id: transcriptId,
               speaker: speakerName,
               text: text,
               words: data.data.words,
@@ -1687,7 +1693,7 @@ recallBotWss.on("connection", (ws) => {
 
             // Send keywords to UI
             const allKeywords = db.getKeywords(meetingId);
-            sendToUIClients("keywords", allKeywords);
+            sendToUIClients("keywords", { meeting_id: meetingId, keywords: allKeywords });
           }
         }
       } else {
@@ -1711,7 +1717,7 @@ recallBotWss.on("connection", (ws) => {
 });
 
 // Start the server
-server.listen(expressPort, () => {
+server.listen(expressPort, process.env.HOST || "127.0.0.1", () => {
   console.log(`
 ╔════════════════════════════════════════════════════════════╗
 ║                    DO THIS FOR ME                          ║

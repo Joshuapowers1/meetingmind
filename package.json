@@ -1,14 +1,20 @@
 {
-  "name": "do-this-for-me",
+  "name": "meetingmind",
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npm run build && node --test tests/*.test.js",
     "start": "tsc && node dist/index.js",
-    "dev": "nodemon src/index.ts",
+    "dev": "node --watch -r ts-node/register src/index.ts",
     "build": "tsc"
   },
-  "keywords": ["meeting", "notes", "ai", "transcription", "recall"],
+  "keywords": [
+    "meeting",
+    "notes",
+    "ai",
+    "transcription",
+    "recall"
+  ],
   "author": "",
   "license": "ISC",
   "description": "AI-powered meeting note taker with keyword detection and summaries",
@@ -16,10 +22,7 @@
     "@types/better-sqlite3": "^7.6.13",
     "@types/express": "^5.0.2",
     "@types/node": "^22.15.23",
-    "@types/uuid": "^10.0.0",
     "@types/ws": "^8.18.1",
-    "express": "^5.1.0",
-    "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   },
@@ -28,7 +31,13 @@
     "better-sqlite3": "^12.9.0",
     "dotenv": "^16.5.0",
     "openai": "^6.35.0",
-    "uuid": "^14.0.0",
-    "ws": "^8.18.2"
+    "ws": "^8.18.2",
+    "express": "^5.1.0"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "allowScripts": {
+    "better-sqlite3@12.11.1": true
   }
 }

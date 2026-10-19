@@ -5,14 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MeetingMind - AI Meeting Intelligence</title>
     <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="workspace.css" />
   </head>
   <body>
     <div class="app">
       <!-- Sidebar -->
       <aside class="sidebar">
         <div class="sidebar-header">
-          <h1 class="logo">MeetingMind</h1>
-          <span class="logo-subtitle">AI Meeting Intelligence</span>
+          <h1 class="logo"><span class="brand-mark">m</span> MeetingMind</h1>
+          <span class="logo-subtitle">Your meeting workspace</span>
         </div>
 
         <!-- Main Navigation -->
@@ -24,7 +25,7 @@
               <rect x="14" y="14" width="7" height="7"></rect>
               <rect x="3" y="14" width="7" height="7"></rect>
             </svg>
-            Dashboard
+            Home
           </button>
           <button class="nav-item" data-view="meetings">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -74,7 +75,7 @@
               <line x1="12" y1="8" x2="12" y2="16"></line>
               <line x1="8" y1="12" x2="16" y2="12"></line>
             </svg>
-            New Meeting
+            Connect meeting
           </button>
         </div>
 
@@ -88,13 +89,18 @@
 
       <!-- Main Content -->
       <main class="main-content">
+        <div class="workspace-topbar"><button class="btn btn-icon" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">☰</button><span>PERSONAL WORKSPACE</span><button id="hideContent" class="btn btn-secondary" title="Hide workspace content (Ctrl/Cmd+Shift+H)">Hide content</button><span class="topbar-tag">Stored on your device</span></div>
         <!-- Dashboard View (Default) -->
         <div class="view active" id="dashboardView">
           <header class="view-header">
-            <h1>Welcome to MeetingMind</h1>
-            <p class="view-subtitle">Your AI-powered meeting intelligence platform</p>
+            <div><span class="eyebrow">A LITTLE MORE PRESENT.</span><h1>Good meetings.<br><span class="muted-heading">Clearer next steps.</span></h1>
+            <p class="view-subtitle">Keep the conversation moving. Let MeetingMind help with the details.</p></div>
           </header>
 
+          <section class="workspace-hero">
+            <div><span class="eyebrow">YOUR IN-MEETING COMPANION</span><h2>Stay in the conversation.</h2><p>Catch up, find the next question, or turn a discussion into action — with answers grounded in your meeting.</p><div class="hero-actions"><button class="btn btn-primary" id="startWorkspace">＋ Start a session</button><button class="btn btn-secondary" id="tryDemo">Explore a sample</button></div><span class="hero-footnote">Start with notes or a transcript. No API keys needed.</span></div>
+            <div class="hero-preview" aria-hidden="true"><span class="preview-label"><span class="live-dot"></span> MEETINGMIND ASSIST</span><h3>A little context.<br>A clearer next move.</h3><div class="preview-wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="preview-chips"><span>Catch me up</span><span>What’s next?</span></div></div>
+          </section>
           <!-- Quick Stats -->
           <div class="stats-grid">
             <div class="stat-card">
@@ -156,8 +162,8 @@
                   <line x1="8" y1="12" x2="16" y2="12"></line>
                 </svg>
               </div>
-              <h3>Start New Meeting</h3>
-              <p>Send a bot to capture your meeting</p>
+              <h3>Connect a meeting</h3>
+              <p>Invite a visible Recall.ai notetaker</p>
             </div>
 
             <div class="dashboard-card action-card" id="quickAskAI">
@@ -230,7 +236,7 @@
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
               </svg>
-              New Meeting
+              Connect meeting
             </button>
           </header>
           <div class="meetings-toolbar">
@@ -243,7 +249,7 @@
                 <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
               </svg>
               <h3>No meetings yet</h3>
-              <p>Click "New Meeting" to start capturing your first meeting.</p>
+              <p>Start a session from Home, or connect a visible notetaker.</p>
             </div>
           </div>
         </div>
@@ -262,6 +268,9 @@
               <span class="meeting-date" id="meetingDate">Date</span>
             </div>
             <div class="meeting-header-actions">
+              <button class="btn btn-secondary" id="focusMode" aria-pressed="false">Focus</button>
+              <a class="btn btn-secondary" id="exportMeeting">Export</a>
+              <button class="btn btn-secondary" id="endSession">End session</button>
               <button class="btn btn-icon" id="generateSummary" title="Generate AI Summary">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
@@ -282,7 +291,12 @@
               </button>
             </div>
           </header>
+          <div class="session-status"><span class="live-dot"></span><span id="sessionStatus">Loading meeting…</span><button class="btn-text" id="deleteSession">Delete meeting</button></div>
           <div class="meeting-detail-content">
+            <section class="live-workspace">
+              <div class="panel context-panel"><div class="panel-header"><div><span class="eyebrow">THE CONVERSATION</span><h3>Meeting context</h3></div><span class="status-badge" id="contextCount">0 segments</span></div><div class="panel-body transcript-body" id="transcriptPanel"><p class="empty-text">Add notes or connect a meeting to begin.</p></div><form id="contextForm" class="context-form"><label class="sr-only" for="contextSpeaker">Speaker</label><input id="contextSpeaker" maxlength="80" placeholder="Speaker or source (optional)"><label class="sr-only" for="contextText">Meeting context</label><textarea id="contextText" maxlength="20000" rows="3" placeholder="Paste a transcript, add a note, or capture what was just said…" required></textarea><div class="context-form-footer"><span>Saved locally · no microphone capture</span><button class="btn btn-secondary" type="submit">Add context ↗</button></div></form></div>
+              <div class="panel assistant-panel"><div class="panel-header"><div><span class="eyebrow">IN THE MOMENT</span><h3><span class="assist-spark">✦</span> MeetingMind Assist</h3></div><span class="status-badge" id="assistMode">Checking…</span></div><div class="assist-controls"><button data-assist="recap">Catch me up</button><button data-assist="reply">Help me respond</button><button data-assist="questions">Find a question</button><button data-assist="actions">Next steps</button></div><div id="assistResult" class="assist-result" aria-live="polite"><div class="assist-empty"><span>✦</span><h3>Your next thought, clearer.</h3><p>Add meeting context, then choose a prompt or ask a specific question.</p></div></div><form id="assistForm" class="assist-form"><label class="sr-only" for="assistQuestion">Ask about this meeting</label><input id="assistQuestion" maxlength="2000" placeholder="Ask about this meeting…" required><button class="btn btn-primary" type="submit" aria-label="Ask MeetingMind">↑</button></form><div class="assist-footer"><label><input type="checkbox" id="localAnswers"> Local-only answers</label><span id="assistPrivacy">AI requests send recent context to OpenAI.</span></div></div>
+            </section>
             <div class="meeting-panels">
               <!-- Summary Panel -->
               <div class="panel">
@@ -298,13 +312,7 @@
                   <p class="empty-text">Action items will appear here.</p>
                 </div>
               </div>
-              <!-- Transcript Panel -->
-              <div class="panel transcript-panel">
-                <div class="panel-header"><h3>Transcript</h3></div>
-                <div class="panel-body transcript-body" id="transcriptPanel">
-                  <p class="empty-text">Transcript will appear as the meeting progresses.</p>
-                </div>
-              </div>
+
             </div>
           </div>
         </div>
@@ -482,9 +490,10 @@
     <div class="modal" id="newMeetingModal">
       <div class="modal-content">
         <div class="modal-header">
-          <h2>Join a Meeting</h2>
+          <h2>Connect a meeting</h2>
           <button class="modal-close" id="closeModal">&times;</button>
         </div>
+        <p class="modal-description">A visible Recall.ai notetaker will join and transcribe. Make sure participants know the meeting is being captured.</p>
         <form id="newMeetingForm">
           <div class="form-group">
             <label for="meetingUrl">Meeting URL</label>
@@ -507,6 +516,9 @@
       </div>
     </div>
 
+    <div class="modal" id="sessionModal" role="dialog" aria-modal="true" aria-labelledby="sessionModalTitle"><div class="modal-content"><div class="modal-header"><h2 id="sessionModalTitle">Start a session</h2><button class="modal-close" data-close-session aria-label="Close">×</button></div><p class="modal-description">A space for your notes and meeting context. Nothing is recorded automatically.</p><form id="sessionForm"><div class="form-group"><label for="sessionTitle">What are you working on?</label><input id="sessionTitle" maxlength="160" placeholder="e.g. Product team weekly" required></div><div class="form-actions"><button type="button" class="btn btn-secondary" data-close-session>Cancel</button><button type="submit" class="btn btn-primary">Start session ↗</button></div></form></div></div>
+    <div id="privacyCover" hidden role="dialog" aria-modal="true" aria-label="Workspace hidden"><div><span class="brand-mark">m</span><h2>Workspace hidden</h2><p>Content is covered on this screen. Connected meeting capture continues.</p><button id="restoreContent" class="btn btn-primary">Show workspace</button><small>Ctrl / ⌘ + Shift + H</small></div></div>
+    <div id="toast" role="status" class="toast" hidden></div>
     <!-- Contact Modal -->
     <div class="modal" id="contactModal">
       <div class="modal-content">
@@ -542,5 +554,6 @@
     </div>
 
     <script src="app.js"></script>
+    <script src="workspace.js"></script>
   </body>
 </html>

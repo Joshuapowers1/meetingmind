@@ -65,6 +65,8 @@ function initNavigation() {
 
 function switchView(viewName) {
   currentView = viewName;
+  document.querySelector(".sidebar").classList.remove("open");
+  document.getElementById("menuToggle")?.setAttribute("aria-expanded", "false");
 
   // Update nav
   document.querySelectorAll('.nav-item').forEach(btn => {
@@ -337,11 +339,24 @@ function filterMeetings(query) {
 async function openMeeting(meetingId) {
   currentMeetingId = meetingId;
   switchView('meetingDetail');
+  document.getElementById('meetingTitle').textContent = 'Loading meeting…';
+  document.getElementById('contextForm').hidden = true;
+  document.getElementById('endSession').hidden = true;
+  if (workspaceMeeting?.id !== meetingId) {
+    assistanceController?.abort();
+    assistanceRequest++;
+    setAssistBusy(true);
+    document.getElementById('assistResult').textContent = 'Loading meeting context…';
+  }
+  for (const id of ['transcriptPanel', 'summaryPanel', 'actionItemsPanel']) document.getElementById(id).replaceChildren();
 
   try {
     const response = await fetch(`/api/meetings/${meetingId}`);
+    if (!response.ok) throw new Error("Meeting unavailable");
     if (response.ok) {
       const data = await response.json();
+      if (currentMeetingId !== meetingId || currentView !== 'meetingDetail') return;
+      renderWorkspaceMeeting(data);
 
       document.getElementById('meetingTitle').textContent = data.title || 'Untitled Meeting';
       document.getElementById('meetingDate').textContent = formatDate(data.created_at);
@@ -350,7 +365,7 @@ async function openMeeting(meetingId) {
       const transcriptPanel = document.getElementById('transcriptPanel');
       if (data.transcripts && data.transcripts.length > 0) {
         transcriptPanel.innerHTML = data.transcripts.map(t => `
-          <div class="transcript-line">
+          <div class="transcript-line" data-transcript-id="${escapeHtml(t.id)}">
             <span class="transcript-speaker">${escapeHtml(t.speaker_name || 'Speaker')}:</span>
             <span class="transcript-text">${escapeHtml(t.text)}</span>
           </div>
@@ -375,13 +390,20 @@ async function openMeeting(meetingId) {
       // Render summary
       const summaryPanel = document.getElementById('summaryPanel');
       if (data.summary) {
-        summaryPanel.innerHTML = `<p>${escapeHtml(data.summary.summary || '')}</p>`;
+        let summary;
+        try { summary = JSON.parse(data.summary.content); } catch { summary = { summary: data.summary.content }; }
+        renderSummary(summary);
       } else {
         summaryPanel.innerHTML = '<p class="empty-text">Click the star button to generate an AI summary.</p>';
       }
     }
   } catch (e) {
-    console.log('Could not load meeting');
+    if (currentMeetingId === meetingId) {
+      document.getElementById('meetingTitle').textContent = 'Meeting unavailable';
+      document.getElementById('assistResult').textContent = 'Return to Meetings and try again.';
+      showToast('Could not load this meeting. Try again.', true);
+    }
+    return;
   }
 
   // Set up action buttons
@@ -441,7 +463,7 @@ async function handleNewMeeting(e) {
       }
     } else {
       const error = await response.json();
-      alert('Error: ' + (error.message || 'Failed to send bot'));
+      alert('Error: ' + (error.error || error.message || 'Failed to send bot'));
     }
   } catch (error) {
     console.error('Error:', error);
@@ -460,6 +482,7 @@ async function generateMeetingSummary(meetingId) {
 
     if (response.ok) {
       const data = await response.json();
+      if (currentMeetingId !== meetingId) return;
       const summaryPanel = document.getElementById('summaryPanel');
 
       let html = '';
@@ -473,6 +496,9 @@ async function generateMeetingSummary(meetingId) {
       }
 
       summaryPanel.innerHTML = html || '<p>Summary generated.</p>';
+    } else {
+      const error = await response.json();
+      showToast(error.error || 'Could not generate a summary.', true);
     }
   } catch (e) {
     alert('Failed to generate summary');
@@ -815,23 +841,19 @@ async function saveSettings() {
 }
 
 async function checkConnectionStatus() {
-  // OpenAI status
-  const openaiStatus = document.getElementById('openaiStatus');
   try {
-    const response = await fetch('/api/settings');
-    if (response.ok) {
-      openaiStatus.textContent = 'Not configured';
-      openaiStatus.className = 'status-badge warning';
+    const response = await fetch('/api/status');
+    if (!response.ok) throw new Error('Status unavailable');
+    const data = await response.json();
+    for (const key of ['openai', 'recall']) {
+      const el = document.getElementById(key + 'Status');
+      el.textContent = data[key] ? 'Configured' : 'Not configured';
+      el.className = 'status-badge ' + (data[key] ? 'success' : 'warning');
     }
-  } catch (e) {
-    openaiStatus.textContent = 'Error';
-    openaiStatus.className = 'status-badge error';
+    configureAssistance(data);
+  } catch {
+    for (const key of ['openai', 'recall']) document.getElementById(key + 'Status').textContent = 'Unavailable';
   }
-
-  // Recall status
-  const recallStatus = document.getElementById('recallStatus');
-  recallStatus.textContent = 'Ready';
-  recallStatus.className = 'status-badge success';
 }
 
 // ============================================================================
@@ -845,6 +867,7 @@ function connectWebSocket() {
 
   ws.onopen = () => {
     updateStatus('Connected', 'success');
+    if (currentView === 'meetingDetail' && currentMeetingId) openMeeting(currentMeetingId);
   };
 
   ws.onmessage = (event) => {
@@ -867,23 +890,13 @@ function connectWebSocket() {
 }
 
 function handleServerMessage(message) {
-  // Handle real-time transcript updates
-  if (message.type === 'transcript' && currentView === 'meetingDetail') {
-    const panel = document.getElementById('transcriptPanel');
-    const emptyText = panel.querySelector('.empty-text');
-    if (emptyText) emptyText.remove();
-
-    panel.innerHTML += `
-      <div class="transcript-line">
-        <span class="transcript-speaker">${escapeHtml(message.data?.speaker || 'Speaker')}:</span>
-        <span class="transcript-text">${escapeHtml(message.data?.text || '')}</span>
-      </div>
-    `;
-    panel.scrollTop = panel.scrollHeight;
+  if (message.type === 'transcript' && currentView === 'meetingDetail' && message.data?.meeting_id === currentMeetingId) {
+    appendTranscript(message.data);
   }
 
   // Refresh data on meeting updates
   if (message.type === 'meeting_update') {
+    if (currentView === 'meetingDetail' && message.data?.id === currentMeetingId) openMeeting(currentMeetingId);
     if (currentView === 'dashboard') {
       loadRecentMeetings();
       loadPendingActions();

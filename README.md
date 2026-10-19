@@ -1,6 +1,39 @@
-# Do This For Me
+# MeetingMind
 
-AI-powered meeting note taker inspired by **Fathom AI** and **Granola**. Features real-time transcription, intelligent keyword detection, AI summaries, and advanced features like cross-meeting search, coaching scorecards, and auto-join.
+A local meeting workspace with a focused, responsive interface and contextual assistance. Start a manual session, paste meeting notes or a transcript, then catch up, prepare a response, find questions, or review next steps. Existing Recall.ai capture and meeting management remain available.
+
+## Start without API keys
+
+Requires Node.js 22 or newer.
+
+```bash
+npm ci
+npm start
+# Open http://127.0.0.1:3000
+```
+
+Choose **Start a session** on Home, name the meeting, and add context. **Explore a sample** creates a clearly labeled sample meeting you can delete. Manual sessions do not capture your microphone, screen, or system audio. End a manual session to prevent further additions; export notes to Markdown or delete the session.
+
+**MeetingMind Assist** uses only the selected meeting's recent context (up to 80 segments / approximately 16,000 characters). With `OPENAI_API_KEY`, answers cite numbered transcript segments and support recap, suggested response, follow-up questions, action extraction, and custom questions. Expand **View context** to inspect sources. Without a key, assistance provides explicitly labeled local transcript excerpts instead of pretending to generate AI answers. AI failures display an error; switch to local-only answers to continue without the service.
+
+## Privacy and scope
+
+- Meeting data is stored in `data/meetings.db`. The server binds to `127.0.0.1` by default. This is a single-user local app without authentication; do not expose the web/API port publicly.
+- **Local-only answers** applies to the meeting assistant. Other existing AI features (summaries, cross-meeting chat, follow-up emails, coaching) use OpenAI when configured. The local setting is stored in this browser.
+- **Hide content** (Ctrl/Cmd + Shift + H) covers the app's contents until restored. **Focus** simplifies the workspace. Neither stops capture or prevents screenshots, screen sharing, or monitoring.
+- **Connect meeting** sends a visible Recall.ai notetaker. Inform participants and obtain any required consent. Remove that notetaker in the meeting to stop capture; the manual End session button does not control bots.
+- Deleting a meeting removes its transcript and directly linked notes, actions, highlights, and exports from the database. Previously downloaded files, backups, or text copied into cross-meeting chat are separate copies.
+- Service status shows whether keys are configured, not whether remote providers are reachable. Actual AI and Recall requests require working credentials and network access.
+
+## Development and verification
+
+```bash
+npm run build
+npm test
+npm run dev
+```
+
+Tests use isolated temporary databases and local ports. They cover fresh startup, input validation, scoped transcript broadcasts, offline assistance/citations, context limits, export, session ending/deletion, and Recall timestamp handling. Live provider integration requires separate validation with real credentials.
 
 ## Features
 
@@ -37,7 +70,7 @@ npm install
 
 # 2. Configure environment
 cp .env.example .env
-# Edit .env and add your RECALL_API_KEY (required)
+# For visible bot capture, add RECALL_API_KEY
 # Optionally add OPENAI_API_KEY for AI summaries
 
 # 3. Start ngrok (in a separate terminal)
@@ -53,8 +86,11 @@ npm run dev
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `RECALL_API_KEY` | Yes | Get from [Recall.ai Dashboard](https://us-west-2.recall.ai/dashboard/developers/api-keys) |
+| `RECALL_API_KEY` | For bot capture | Get from [Recall.ai Dashboard](https://us-west-2.recall.ai/dashboard/developers/api-keys) |
 | `OPENAI_API_KEY` | No | For AI-powered features. Without this, basic functionality still works |
+| `ASSISTANT_MODEL` | No | Meeting assistant model (default: `gpt-4o-mini`) |
+| `DATABASE_PATH` | No | Override local SQLite path (useful for isolated tests) |
+| `HOST` / `RECALL_HOST` | No | Bind addresses (default: `127.0.0.1`) |
 | `PORT` | No | Web server port (default: 3000) |
 | `WEBSOCKET_PORT` | No | WebSocket port for Recall.ai bot (default: 3456) |
 
@@ -180,8 +216,7 @@ The system automatically detects:
 
 ## Cost
 
-- **Recall.ai**: $0.50/hour of recorded meeting (5 free hours to start)
-- **OpenAI**: ~$0.01-0.10 per AI feature call (optional)
+Manual sessions and local excerpts do not call paid services. Recall.ai and OpenAI usage are billed by their respective providers; consult their current pricing.
 
 ## License
 
